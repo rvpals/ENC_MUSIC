@@ -50,4 +50,4 @@ All dependencies are declared in `gradle/libs.versions.toml` using the Gradle ve
 ## APK Output
 
 - Debug: `app/build/outputs/apk/debug/app-debug.apk`
-- Release: `app/build/outputs/apk/release/app-release-unsigned.apk`
+- Release: `app/build/outputs/apk/release/app-release.apk` (signed with debug keystore)

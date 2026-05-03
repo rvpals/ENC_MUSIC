@@ -41,6 +41,8 @@ Type-safe navigation using `@Serializable` route objects with Navigation Compose
 - `ArtistRoute(artistId)` — artist detail
 - `PlayerRoute` — now-playing
 
+`MusicNavHost` wraps the `NavHost` in a `Column` with a `MiniPlayer` at the bottom. The mini player is visible on all screens except `PlayerRoute` and provides quick access to playback controls without navigating away. A `NavHostViewModel` exposes the shared ExoPlayer instance to the mini player.
+
 ### Data Layer
 
 **MusicRepository** queries the Android MediaStore ContentProvider for songs, albums, and artists. All queries run on `Dispatchers.IO`.
@@ -52,7 +54,7 @@ Type-safe navigation using `@Serializable` route objects with Navigation Compose
 
 ### Service Layer
 
-**PlaybackService** extends `MediaSessionService` to handle background audio playback. The `ExoPlayer` instance is singleton-scoped via Hilt and shared between the service and ViewModels.
+**PlaybackService** extends `MediaSessionService` to handle background audio playback. It is started by `MainActivity.onCreate()` to ensure background playback and notification controls are available immediately. The `ExoPlayer` instance is singleton-scoped via Hilt and shared between the service and ViewModels. The service does not release the ExoPlayer on destroy since it is a Hilt-managed singleton.
 
 ### Dependency Injection
 

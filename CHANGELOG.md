@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] - 2026-05-03
+
+### Added
+- Mini player bar visible across library, album, and artist screens with album art, title, play/pause, skip, and progress indicator
+- Tapping mini player navigates to the full now-playing screen
+- Notification permission request (POST_NOTIFICATIONS) on Android 13+
+- NavHostViewModel to provide shared ExoPlayer instance to mini player
+
+### Fixed
+- Runtime permission flow: library now loads correctly after granting audio permission (was loading before permission dialog appeared)
+- Library loads immediately on app re-open when permission is already granted
+- PlaybackService is now started on app launch for proper background playback and notification controls
+- PlaybackService no longer releases the shared ExoPlayer singleton on destroy, which previously broke playback
+- Release APK is now signed with the debug keystore so it can be installed on devices
+
 ## [1.0.0] - 2026-05-02
 
 ### Added

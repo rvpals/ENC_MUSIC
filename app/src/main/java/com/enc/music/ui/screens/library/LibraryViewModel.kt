@@ -35,10 +35,6 @@ class LibraryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState
 
-    init {
-        loadLibrary()
-    }
-
     fun selectTab(tab: LibraryTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
     }
@@ -52,7 +48,7 @@ class LibraryViewModel @Inject constructor(
         player.play()
     }
 
-    private fun loadLibrary() {
+    fun loadLibrary() {
         viewModelScope.launch {
             val songs = musicRepository.querySongs()
             val albums = musicRepository.queryAlbums()

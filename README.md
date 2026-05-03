@@ -5,10 +5,12 @@ A modern Android music player built with Kotlin, Jetpack Compose, and Media3.
 ## Features
 
 - Browse your music library by songs, albums, and artists
-- Background audio playback with media session controls
-- Now-playing screen with play/pause, skip, seek, shuffle, and repeat
+- Mini player bar with playback controls visible across all screens
+- Full now-playing screen with play/pause, skip, seek, shuffle, and repeat
+- Background audio playback with media notification controls
 - Album and artist detail views
 - Playlist support with Room database persistence
+- Runtime permission handling for audio access and notifications
 - Material 3 dynamic color theming
 - Android 12+ splash screen with backward compatibility
 
@@ -40,7 +42,7 @@ A modern Android music player built with Kotlin, Jetpack Compose, and Media3.
 ./gradlew assembleRelease     # Release APK (minified)
 ```
 
-The release APK is output to `app/build/outputs/apk/release/`.
+The release APK is signed with the debug keystore and output to `app/build/outputs/apk/release/`.
 
 ## Project Structure
 
@@ -55,7 +57,7 @@ app/src/main/java/com/enc/music/
 └── ui/
     ├── theme/          Material 3 theming
     ├── navigation/     Type-safe route definitions and NavHost
-    ├── components/     Shared composables
+    ├── components/     Shared composables (SongListItem, MiniPlayer)
     └── screens/        Library, Player, Album, Artist screens
 ```
 

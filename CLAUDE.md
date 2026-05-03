@@ -65,8 +65,8 @@ Room Database + Media3 Service
 - `service/PlaybackService` — Media3 MediaSessionService for background audio
 - `di/` — Hilt modules (AppModule for DB/ContentResolver, MediaModule for ExoPlayer)
 - `ui/screens/` — library (tabbed songs/albums/artists), player, album detail, artist detail
-- `ui/navigation/` — type-safe routes via `@Serializable` data objects + Navigation Compose
-- `ui/components/` — shared composables (SongListItem)
+- `ui/navigation/` — type-safe routes via `@Serializable` data objects + Navigation Compose + NavHostViewModel
+- `ui/components/` — shared composables (SongListItem, MiniPlayer)
 
 ## Build Configuration Notes
 
