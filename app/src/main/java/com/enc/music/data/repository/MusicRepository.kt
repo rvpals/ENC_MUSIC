@@ -127,6 +127,8 @@ class MusicRepository @Inject constructor(
                     val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "Unknown"
                     val album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM) ?: "Unknown"
                     val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+                    val genre = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE) ?: ""
+                    val year = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)?.toIntOrNull() ?: 0
 
                     val songId = nextId()
                     val albumId = album.hashCode().toLong() and 0x7FFFFFFFL
@@ -145,7 +147,9 @@ class MusicRepository @Inject constructor(
                             uri = fileUri.toString(),
                             albumArtUri = null,
                             filePath = filePath,
-                            folderPath = folderPath
+                            folderPath = folderPath,
+                            genre = genre,
+                            year = year
                         )
                     )
 
@@ -190,7 +194,7 @@ class MusicRepository @Inject constructor(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }
 
-        val projection = arrayOf(
+        val baseProjection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
@@ -199,7 +203,13 @@ class MusicRepository @Inject constructor(
             MediaStore.Audio.Media.ARTIST_ID,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.YEAR,
         )
+        val projection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            baseProjection + MediaStore.Audio.Media.GENRE
+        } else {
+            baseProjection
+        }
 
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
         val sortOrder = "${MediaStore.Audio.Media.TITLE} ASC"
@@ -213,12 +223,20 @@ class MusicRepository @Inject constructor(
             val artistIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID)
             val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+            val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+            val genreCol = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                cursor.getColumnIndex(MediaStore.Audio.Media.GENRE)
+            } else {
+                -1
+            }
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idCol)
                 val albumId = cursor.getLong(albumIdCol)
                 val filePath = cursor.getString(dataCol) ?: ""
                 val folderPath = filePath.substringBeforeLast("/", "")
+                val genre = if (genreCol >= 0) cursor.getString(genreCol) ?: "" else ""
+                val year = cursor.getInt(yearCol)
                 songs.add(
                     Song(
                         id = id,
@@ -234,7 +252,9 @@ class MusicRepository @Inject constructor(
                             albumId
                         ),
                         filePath = filePath,
-                        folderPath = folderPath
+                        folderPath = folderPath,
+                        genre = genre,
+                        year = year
                     )
                 )
             }
@@ -332,7 +352,10 @@ private fun Song.toEntity() = SongEntity(
     uri = uri.toString(),
     albumArtUri = albumArtUri?.toString(),
     filePath = filePath,
-    folderPath = folderPath
+    folderPath = folderPath,
+    genre = genre,
+    year = year,
+    rating = rating
 )
 
 private fun Album.toEntity() = AlbumEntity(
@@ -362,7 +385,10 @@ fun SongEntity.toSong() = Song(
     uri = Uri.parse(uri),
     albumArtUri = albumArtUri?.let { Uri.parse(it) },
     filePath = filePath,
-    folderPath = folderPath
+    folderPath = folderPath,
+    genre = genre,
+    year = year,
+    rating = rating
 )
 
 fun AlbumEntity.toAlbum() = Album(

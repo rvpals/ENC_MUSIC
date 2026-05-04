@@ -16,3 +16,6 @@ object PlayerRoute
 
 @Serializable
 object DatabaseManagementRoute
+
+@Serializable
+object MagicSearchRoute

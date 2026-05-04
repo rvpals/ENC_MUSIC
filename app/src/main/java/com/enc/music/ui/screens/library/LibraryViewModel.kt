@@ -64,12 +64,20 @@ class LibraryViewModel @Inject constructor(
                     musicRepository.getAllArtists(),
                     musicRepository.getDistinctFolders()
                 ) { songs, albums, artists, allFolders ->
-                    val folderItems = buildFolderItems(null, allFolders, songs)
-                    _uiState.value.copy(
+                    val current = _uiState.value
+                    val folderPath = current.currentFolderPath
+                    val folderItems = buildFolderItems(folderPath, allFolders, songs)
+                    val folderSongs = if (folderPath != null) {
+                        songs.filter { it.folderPath == folderPath }
+                    } else {
+                        emptyList()
+                    }
+                    current.copy(
                         songs = songs,
                         albums = albums,
                         artists = artists,
                         folders = folderItems,
+                        folderSongs = folderSongs,
                         isLoading = false
                     )
                 }.collect { state ->
@@ -117,29 +125,19 @@ class LibraryViewModel @Inject constructor(
         allFolders: List<String>,
         allSongs: List<Song>
     ): List<FolderItem> {
-        val childFolders = if (parentPath == null) {
-            val roots = mutableSetOf<String>()
-            for (folder in allFolders) {
-                val parts = folder.split("/").filter { it.isNotEmpty() }
-                if (parts.size >= 2) {
-                    roots.add("/" + parts.take(parts.size - 0).joinToString("/").substringBefore("/", parts.first()))
-                }
-            }
-            allFolders.map { it }.groupBy { path ->
-                findRootAncestor(path, allFolders)
-            }.keys.sorted()
+        val childPaths = if (parentPath == null) {
+            allFolders.map { findRootAncestor(it, allFolders) }.distinct().sorted()
         } else {
-            allFolders.filter { folder ->
-                folder != parentPath &&
-                        folder.startsWith("$parentPath/") &&
-                        !folder.removePrefix("$parentPath/").contains("/")
-            }.sorted()
+            allFolders
+                .filter { it.startsWith("$parentPath/") }
+                .map { "$parentPath/" + it.removePrefix("$parentPath/").substringBefore("/") }
+                .distinct()
+                .sorted()
         }
 
-        return childFolders.map { folderPath ->
-            val songsDirectlyInFolder = allSongs.count { it.folderPath == folderPath }
-            val subfolderCount = allFolders.count { it != folderPath && it.startsWith("$folderPath/") }
+        return childPaths.map { folderPath ->
             val totalSongs = allSongs.count { it.folderPath.startsWith(folderPath) }
+            val subfolderCount = allFolders.count { it != folderPath && it.startsWith("$folderPath/") }
             FolderItem(
                 name = folderPath.substringAfterLast("/"),
                 path = folderPath,
@@ -155,8 +153,11 @@ class LibraryViewModel @Inject constructor(
         for (segment in segments) {
             current = "$current/$segment"
             val hasDirectSongs = allFolders.contains(current)
-            val hasChildren = allFolders.any { it != current && it.startsWith("$current/") }
-            if (hasDirectSongs || hasChildren) {
+            val nextSegments = allFolders
+                .filter { it.startsWith("$current/") }
+                .map { it.removePrefix("$current/").substringBefore("/") }
+                .distinct()
+            if (hasDirectSongs || nextSegments.size > 1 || nextSegments.isEmpty()) {
                 return current
             }
         }

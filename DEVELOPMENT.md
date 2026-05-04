@@ -42,11 +42,25 @@ All dependencies are declared in `gradle/libs.versions.toml` using the Gradle ve
 
 - **Single Activity** — `MainActivity` is the only activity; all screens are Compose destinations
 - **Hilt everywhere** — annotate ViewModels with `@HiltViewModel`, activities/services with `@AndroidEntryPoint`
-- **Room as primary data source** — all music metadata (songs, albums, artists) is stored in Room and read via reactive Flows; MediaStore is used only for the initial sync on app launch
+- **Room as primary data source** — all music metadata (songs with genre/year/rating, albums, artists) is stored in Room and read via reactive Flows; MediaStore is used only for the initial sync on app launch
 - **Folder scanning via SAF** — user-initiated rescans use DocumentFile (Storage Access Framework) and MediaMetadataRetriever to import audio files from selected folders
 - **Singleton ExoPlayer** — the player instance is shared between the service and ViewModels via Hilt
 - **Type-safe routes** — navigation routes are `@Serializable` data classes/objects in `Routes.kt`
 - **StateFlow for UI state** — each ViewModel exposes a single `StateFlow<*UiState>` data class
+- **EncMusicList for curated lists** — Enchanted Music Lists use file paths (not song IDs) to reference songs, making them resilient to database rebuilds
+- **Database versioning** — uses `fallbackToDestructiveMigration()` since all music data can be re-synced from MediaStore; EncMusicList data is user-created and will be lost on destructive migration (future: add proper migrations)
+
+## Database Schema (Version 4)
+
+| Table | Purpose |
+|-------|---------|
+| `songs` | Song metadata with unique filePath index |
+| `albums` | Album metadata |
+| `artists` | Artist metadata |
+| `playlists` | User playlists |
+| `playlist_songs` | Playlist-song junction (by song ID) |
+| `enc_music_lists` | Enchanted Music Lists (unique name, description) |
+| `enc_music_list_songs` | List-song junction (by file path, cascade delete) |
 
 ## APK Output
 

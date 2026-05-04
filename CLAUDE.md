@@ -31,7 +31,7 @@ Requires `JAVA_HOME` set to JDK 17 (on this machine: `E:/Prog/Java/jdk-17`).
 
 - **UI:** Jetpack Compose with Material 3, Coil for images
 - **Media:** Media3 (ExoPlayer + MediaSession) for audio playback
-- **Database:** Room with KSP annotation processing (songs, albums, artists, playlists)
+- **Database:** Room with KSP annotation processing (songs, albums, artists, playlists, enc_music_lists)
 - **DI:** Hilt with KSP
 - **Navigation:** Navigation Compose (single-activity architecture)
 - **Async:** Kotlin Coroutines + Flows
@@ -60,11 +60,11 @@ Room Database + Media3 Service
 ## Key Packages
 
 - `model/` — domain models (Song, Album, Artist, FolderItem) used across layers
-- `data/local/` — Room database, entities (SongEntity, AlbumEntity, ArtistEntity, PlaylistEntity, PlaylistSongCrossRef), DAOs (SongDao, AlbumDao, ArtistDao, PlaylistDao)
+- `data/local/` — Room database, entities (SongEntity, AlbumEntity, ArtistEntity, PlaylistEntity, PlaylistSongCrossRef, EncMusicListEntity, EncMusicListSongEntity), DAOs (SongDao, AlbumDao, ArtistDao, PlaylistDao, EncMusicListDao)
 - `data/repository/MusicRepository` — MediaStore sync, Room reads via Flow, SAF folder scanning, library erase
 - `service/PlaybackService` — Media3 MediaSessionService for background audio
 - `di/` — Hilt modules (AppModule for DB/ContentResolver/DAOs, MediaModule for ExoPlayer)
-- `ui/screens/` — library (tabbed songs/albums/artists/folders), player, album detail, artist detail, database management
+- `ui/screens/` — library (tabbed songs/albums/artists/folders), player, album detail, artist detail, database management, magic search
 - `ui/navigation/` — type-safe routes via `@Serializable` data objects + Navigation Compose + NavHostViewModel
 - `ui/components/` — shared composables (SongListItem, MiniPlayer)
 

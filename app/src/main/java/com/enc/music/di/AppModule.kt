@@ -6,6 +6,7 @@ import androidx.room.Room
 import com.enc.music.data.local.MusicDatabase
 import com.enc.music.data.local.dao.AlbumDao
 import com.enc.music.data.local.dao.ArtistDao
+import com.enc.music.data.local.dao.EncMusicListDao
 import com.enc.music.data.local.dao.PlaylistDao
 import com.enc.music.data.local.dao.SongDao
 import dagger.Module
@@ -53,5 +54,10 @@ object AppModule {
     @Provides
     fun provideArtistDao(database: MusicDatabase): ArtistDao {
         return database.artistDao()
+    }
+
+    @Provides
+    fun provideEncMusicListDao(database: MusicDatabase): EncMusicListDao {
+        return database.encMusicListDao()
     }
 }

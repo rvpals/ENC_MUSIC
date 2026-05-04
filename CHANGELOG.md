@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.3.0] - 2026-05-04
+
+### Added
+- **Enchanted Music Magic** — new screen accessible from the app menu for advanced music search and smart playlist building
+  - Multi-field search filters: genre, artist, album, year (all as multi-select chips), and song duration (under 1 min, under 3 min, over 5 min, over 10 min)
+  - **Target total duration** — enter a target time (e.g., 45 minutes) and the app auto-picks a shuffled subset of matching songs whose combined duration approximates the target (within 10% tolerance)
+  - Results grid with song count, total duration, select all/clear, and individual song toggle
+  - Each result row shows title, artist, genre, year, and duration
+  - **Add to Magic List** — FAB appears when songs are selected; opens dialog to choose an existing EncMusicList or create a new one (name + description)
+  - Snackbar confirmation after adding songs
+  - Collapsible filter panel for more screen space when reviewing results
+- **EncMusicList** (Enchanted Music List) — new database entity for curated song lists
+  - `EncMusicListEntity` with auto-generated ID, unique name, description, and creation timestamp
+  - `EncMusicListSongEntity` junction table linking lists to songs by full file path, with cascade delete, sort order, and added-at timestamp
+  - `EncMusicListDao` with full CRUD: create/update/delete lists, add/remove songs by file path, query song paths per list, get by name or ID, song count
+  - Registered in `MusicDatabase` (version 4) and wired via Hilt in `AppModule`
+- **Song metadata fields** — `genre` (String), `year` (Int), `rating` (Int) added to `SongEntity` and `Song` domain model
+  - Genre extracted from MediaStore (API 30+ via `MediaStore.Audio.Media.GENRE`) and from MediaMetadataRetriever for SAF folder scans (all API levels)
+  - Year extracted from both MediaStore and MediaMetadataRetriever
+  - Rating defaults to 0, ready for future user-driven rating UI
+- **Unique file path index** on `SongEntity.filePath` — enforces uniqueness of songs by their file path as the business key
+- `MagicSearchRoute` added to type-safe navigation
+
+### Fixed
+- **Folder browsing** — clicking a folder in the Folders tab now correctly navigates into it
+  - Fixed `buildFolderItems` to discover child folders by extracting the next path segment from all descendant paths, instead of requiring exact matches in the distinct folders list
+  - Fixed `findRootAncestor` to skip single-child intermediate directories (e.g., `/storage/emulated/0`) and land on meaningful folders where songs exist or paths branch
+  - Fixed `loadLibrary` combine collector to respect `currentFolderPath` instead of always resetting to root folders
+
+### Changed
+- `MusicDatabase` bumped to version 4 (destructive migration via `fallbackToDestructiveMigration`)
+- `MusicRepository.scanSongsFromMediaStore` now reads genre (conditionally on API 30+) and year columns
+- `MusicRepository.scanDocTree` extracts genre and year via MediaMetadataRetriever
+- Song-to-entity and entity-to-song mappers updated for new fields
+- App menu now shows "Enchanted Music Magic" as the first item, above "Database Management"
+- `versionCode` bumped to 4, `versionName` to 1.3.0
+
 ## [1.2.0] - 2026-05-03
 
 ### Added

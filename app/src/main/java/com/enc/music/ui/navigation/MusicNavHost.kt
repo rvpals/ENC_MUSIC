@@ -18,6 +18,7 @@ import com.enc.music.ui.screens.album.AlbumScreen
 import com.enc.music.ui.screens.artist.ArtistScreen
 import com.enc.music.ui.screens.dbmanagement.DatabaseManagementScreen
 import com.enc.music.ui.screens.library.LibraryScreen
+import com.enc.music.ui.screens.magic.MagicSearchScreen
 import com.enc.music.ui.screens.player.PlayerScreen
 
 @Composable
@@ -63,6 +64,11 @@ fun MusicNavHost(
                 }
                 composable<DatabaseManagementRoute> {
                     DatabaseManagementScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<MagicSearchRoute> {
+                    MagicSearchScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }

@@ -18,6 +18,7 @@ ENC Music follows a layered MVVM architecture with unidirectional data flow.
 │    ← MediaStore (scan/sync)        │
 │    ← Room Database (read/write)    │
 │    ← DocumentFile (folder scan)    │
+│  EncMusicListDao ← Room Database   │
 │  PlaylistDao ← Room Database       │
 ├─────────────────────────────────────┤
 │         Service Layer               │
@@ -36,6 +37,7 @@ Each screen has a dedicated ViewModel that exposes a `StateFlow<UiState>`. Compo
 - `AlbumScreen` / `AlbumViewModel` — album detail with song list
 - `ArtistScreen` / `ArtistViewModel` — artist detail with album list
 - `DatabaseManagementScreen` / `DatabaseManagementViewModel` — library stats, rescan, erase
+- `MagicSearchScreen` / `MagicSearchViewModel` — advanced multi-field search with duration targeting, song selection, and "Add to Magic List" workflow
 
 ### Navigation
 
@@ -46,24 +48,27 @@ Type-safe navigation using `@Serializable` route objects with Navigation Compose
 - `ArtistRoute(artistId)` — artist detail
 - `PlayerRoute` — now-playing
 - `DatabaseManagementRoute` — database management
+- `MagicSearchRoute` — Enchanted Music Magic search screen
 
 `MusicNavHost` wraps the `NavHost` in a `Column` with a `MiniPlayer` at the bottom. The mini player is visible on all screens except `PlayerRoute` and provides quick access to playback controls without navigating away. A `NavHostViewModel` exposes the shared ExoPlayer instance to the mini player.
 
 ### Data Layer
 
 **MusicRepository** is the central data coordinator:
-- **Sync**: Scans MediaStore on app launch and writes all song/album/artist metadata to Room
+- **Sync**: Scans MediaStore on app launch and writes all song/album/artist metadata to Room (including genre, year)
 - **Read**: All UI queries read from Room via reactive `Flow`s (not live MediaStore queries)
-- **Folder scan**: Uses DocumentFile (SAF) and MediaMetadataRetriever to scan user-selected folders recursively, skipping already-imported songs
+- **Folder scan**: Uses DocumentFile (SAF) and MediaMetadataRetriever to scan user-selected folders recursively, extracting metadata including genre and year, skipping already-imported songs
 - **Erase**: Truncates all music tables on demand
 
-**Room Database** (`MusicDatabase`, version 2) stores:
-- `SongEntity` — song metadata including file path and folder path
+**Room Database** (`MusicDatabase`, version 4) stores:
+- `SongEntity` — song metadata including file path, folder path, genre, year, and rating; unique index on filePath
 - `AlbumEntity` — album metadata
 - `ArtistEntity` — artist metadata
 - `PlaylistEntity` — playlist metadata
 - `PlaylistSongCrossRef` — many-to-many relationship between playlists and songs
-- DAOs: `SongDao`, `AlbumDao`, `ArtistDao`, `PlaylistDao` — all with Flow-based queries for reactive UI updates
+- `EncMusicListEntity` — Enchanted Music List metadata (unique name, description)
+- `EncMusicListSongEntity` — junction table linking EncMusicLists to songs by file path (cascade delete)
+- DAOs: `SongDao`, `AlbumDao`, `ArtistDao`, `PlaylistDao`, `EncMusicListDao` — all with Flow-based queries for reactive UI updates
 
 ### Service Layer
 
@@ -72,7 +77,7 @@ Type-safe navigation using `@Serializable` route objects with Navigation Compose
 ### Dependency Injection
 
 Hilt provides all wiring:
-- `AppModule` — ContentResolver, Room database, all DAOs (SongDao, AlbumDao, ArtistDao, PlaylistDao)
+- `AppModule` — ContentResolver, Room database, all DAOs (SongDao, AlbumDao, ArtistDao, PlaylistDao, EncMusicListDao)
 - `MediaModule` — AudioAttributes, ExoPlayer (singleton)
 
 The ExoPlayer singleton is shared between `PlaybackService` and screen ViewModels so they operate on the same player state.

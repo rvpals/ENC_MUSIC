@@ -70,6 +70,7 @@ import com.enc.music.model.FolderItem
 import com.enc.music.model.Song
 import com.enc.music.ui.components.SongListItem
 import com.enc.music.ui.navigation.DatabaseManagementRoute
+import com.enc.music.ui.navigation.MagicSearchRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -158,6 +159,13 @@ fun LibraryScreen(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("Enchanted Music Magic") },
+                                    onClick = {
+                                        showMenu = false
+                                        onNavigateTo(MagicSearchRoute)
+                                    }
+                                )
                                 DropdownMenuItem(
                                     text = { Text("Database Management") },
                                     onClick = {
