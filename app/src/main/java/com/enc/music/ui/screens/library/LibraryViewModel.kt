@@ -9,19 +9,25 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.enc.music.data.repository.MusicRepository
 import com.enc.music.model.Album
 import com.enc.music.model.Artist
+import com.enc.music.model.FolderItem
 import com.enc.music.model.Song
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class LibraryTab { Songs, Albums, Artists }
+enum class LibraryTab { Songs, Albums, Artists, Folders }
 
 data class LibraryUiState(
     val songs: List<Song> = emptyList(),
     val albums: List<Album> = emptyList(),
     val artists: List<Artist> = emptyList(),
+    val folders: List<FolderItem> = emptyList(),
+    val folderSongs: List<Song> = emptyList(),
+    val currentFolderPath: String? = null,
     val selectedTab: LibraryTab = LibraryTab.Songs,
     val isLoading: Boolean = true
 )
@@ -39,28 +45,122 @@ class LibraryViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(selectedTab = tab)
     }
 
-    fun playSong(song: Song) {
-        val songs = _uiState.value.songs
-        val index = songs.indexOf(song)
-        val mediaItems = songs.map { it.toMediaItem() }
-        player.setMediaItems(mediaItems, index, 0L)
+    fun playSong(song: Song, songsContext: List<Song> = _uiState.value.songs) {
+        val index = songsContext.indexOf(song)
+        val mediaItems = songsContext.map { it.toMediaItem() }
+        player.setMediaItems(mediaItems, index.coerceAtLeast(0), 0L)
         player.prepare()
         player.play()
     }
 
     fun loadLibrary() {
         viewModelScope.launch {
-            val songs = musicRepository.querySongs()
-            val albums = musicRepository.queryAlbums()
-            val artists = musicRepository.queryArtists()
-            _uiState.value = LibraryUiState(
-                songs = songs,
-                albums = albums,
-                artists = artists,
-                selectedTab = _uiState.value.selectedTab,
-                isLoading = false
+            musicRepository.syncFromMediaStore()
+
+            launch {
+                combine(
+                    musicRepository.getAllSongs(),
+                    musicRepository.getAllAlbums(),
+                    musicRepository.getAllArtists(),
+                    musicRepository.getDistinctFolders()
+                ) { songs, albums, artists, allFolders ->
+                    val folderItems = buildFolderItems(null, allFolders, songs)
+                    _uiState.value.copy(
+                        songs = songs,
+                        albums = albums,
+                        artists = artists,
+                        folders = folderItems,
+                        isLoading = false
+                    )
+                }.collect { state ->
+                    _uiState.value = state
+                }
+            }
+        }
+    }
+
+    fun openFolder(folderPath: String) {
+        viewModelScope.launch {
+            val allFolders = musicRepository.getDistinctFolders().first()
+            val allSongs = musicRepository.getAllSongs().first()
+            val songsInFolder = allSongs.filter { it.folderPath == folderPath }
+            val subfolders = buildFolderItems(folderPath, allFolders, allSongs)
+            _uiState.value = _uiState.value.copy(
+                currentFolderPath = folderPath,
+                folders = subfolders,
+                folderSongs = songsInFolder
             )
         }
+    }
+
+    fun navigateUp(): Boolean {
+        val current = _uiState.value.currentFolderPath ?: return false
+        val parent = current.substringBeforeLast("/", "")
+        if (parent.isEmpty() || !parent.contains("/")) {
+            viewModelScope.launch {
+                val allFolders = musicRepository.getDistinctFolders().first()
+                val allSongs = musicRepository.getAllSongs().first()
+                _uiState.value = _uiState.value.copy(
+                    currentFolderPath = null,
+                    folders = buildFolderItems(null, allFolders, allSongs),
+                    folderSongs = emptyList()
+                )
+            }
+            return true
+        }
+        openFolder(parent)
+        return true
+    }
+
+    private fun buildFolderItems(
+        parentPath: String?,
+        allFolders: List<String>,
+        allSongs: List<Song>
+    ): List<FolderItem> {
+        val childFolders = if (parentPath == null) {
+            val roots = mutableSetOf<String>()
+            for (folder in allFolders) {
+                val parts = folder.split("/").filter { it.isNotEmpty() }
+                if (parts.size >= 2) {
+                    roots.add("/" + parts.take(parts.size - 0).joinToString("/").substringBefore("/", parts.first()))
+                }
+            }
+            allFolders.map { it }.groupBy { path ->
+                findRootAncestor(path, allFolders)
+            }.keys.sorted()
+        } else {
+            allFolders.filter { folder ->
+                folder != parentPath &&
+                        folder.startsWith("$parentPath/") &&
+                        !folder.removePrefix("$parentPath/").contains("/")
+            }.sorted()
+        }
+
+        return childFolders.map { folderPath ->
+            val songsDirectlyInFolder = allSongs.count { it.folderPath == folderPath }
+            val subfolderCount = allFolders.count { it != folderPath && it.startsWith("$folderPath/") }
+            val totalSongs = allSongs.count { it.folderPath.startsWith(folderPath) }
+            FolderItem(
+                name = folderPath.substringAfterLast("/"),
+                path = folderPath,
+                songCount = totalSongs,
+                subfolderCount = subfolderCount
+            )
+        }
+    }
+
+    private fun findRootAncestor(path: String, allFolders: List<String>): String {
+        val segments = path.split("/").filter { it.isNotEmpty() }
+        var current = ""
+        for (segment in segments) {
+            current = "$current/$segment"
+            val hasDirectSongs = allFolders.contains(current)
+            val hasChildren = allFolders.any { it != current && it.startsWith("$current/") }
+            if (hasDirectSongs || hasChildren) {
+                return current
+            }
+        }
+        return path
     }
 }
 

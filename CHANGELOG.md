@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.2.0] - 2026-05-03
+
+### Added
+- **Local SQLite database** for all music metadata — songs, albums, and artists are now stored in Room with full file paths, replacing live MediaStore queries
+- **Folders tab** — new tab in the library for browsing music by folder hierarchy with recursive navigation into subdirectories and back
+- **Status bar** on every library tab showing item counts (songs, albums, artists, or folders/files)
+- **App menu** — overflow menu (3-dot) in the top bar with Database Management, Preferences, Help, and About items
+- **Database Management screen** — shows library statistics (total songs, albums, artists, files), "Rescan Library" button with SAF folder picker for recursive scanning, and "Erase Library" button with confirmation dialog
+- **Folder-based scanning** — uses DocumentFile (SAF) and MediaMetadataRetriever to scan user-selected folders recursively, extracting metadata and skipping already-imported songs
+- Room entities: `SongEntity`, `AlbumEntity`, `ArtistEntity` with corresponding DAOs (`SongDao`, `AlbumDao`, `ArtistDao`)
+- `FolderItem` domain model for folder browsing
+- `DocumentFile` dependency for Storage Access Framework folder browsing
+- Scrollable tab row to accommodate 4 tabs (Songs, Albums, Artists, Folders)
+
+### Changed
+- `MusicRepository` refactored: MediaStore is scanned once on load and synced to Room; all reads now come from Room as reactive Flows instead of repeated MediaStore queries
+- `Song` model extended with `filePath` and `folderPath` fields
+- `AlbumViewModel` and `ArtistViewModel` now collect Room Flows instead of one-shot suspend calls
+- `LibraryViewModel` manages folder navigation state (open, navigate up) and combines multiple Flows for reactive updates
+- `MusicDatabase` bumped to version 2 with destructive migration (adds songs, albums, artists tables)
+- `AppModule` now provides `SongDao`, `AlbumDao`, `ArtistDao` via Hilt
+- `LibraryScreen` uses `ScrollableTabRow` instead of `TabRow` for 4 tabs
+
 ## [1.1.0] - 2026-05-03
 
 ### Added

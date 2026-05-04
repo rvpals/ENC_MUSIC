@@ -92,6 +92,9 @@ dependencies {
     // Coroutines
     implementation(libs.coroutines.android)
 
+    // DocumentFile (SAF folder browsing)
+    implementation(libs.documentfile)
+
     // Serialization
     implementation(libs.serialization.json)
 

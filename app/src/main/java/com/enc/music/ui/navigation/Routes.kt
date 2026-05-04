@@ -13,3 +13,6 @@ data class ArtistRoute(val artistId: Long)
 
 @Serializable
 object PlayerRoute
+
+@Serializable
+object DatabaseManagementRoute

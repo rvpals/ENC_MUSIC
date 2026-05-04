@@ -8,6 +8,7 @@ import com.enc.music.model.Song
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,14 +29,19 @@ class ArtistViewModel @Inject constructor(
 
     fun loadArtist(artistId: Long) {
         viewModelScope.launch {
-            val albums = musicRepository.getAlbumsForArtist(artistId)
-            val songs = musicRepository.getSongsForArtist(artistId)
-            _uiState.value = ArtistUiState(
-                artistName = songs.firstOrNull()?.artist ?: "",
-                albums = albums,
-                songs = songs,
-                isLoading = false
-            )
+            combine(
+                musicRepository.getAlbumsForArtist(artistId),
+                musicRepository.getSongsForArtist(artistId)
+            ) { albums, songs ->
+                ArtistUiState(
+                    artistName = songs.firstOrNull()?.artist ?: "",
+                    albums = albums,
+                    songs = songs,
+                    isLoading = false
+                )
+            }.collect { state ->
+                _uiState.value = state
+            }
         }
     }
 }

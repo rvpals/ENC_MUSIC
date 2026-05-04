@@ -30,13 +30,14 @@ class AlbumViewModel @Inject constructor(
 
     fun loadAlbum(albumId: Long) {
         viewModelScope.launch {
-            val songs = musicRepository.getSongsForAlbum(albumId)
-            _uiState.value = AlbumUiState(
-                albumTitle = songs.firstOrNull()?.album ?: "",
-                artist = songs.firstOrNull()?.artist ?: "",
-                songs = songs,
-                isLoading = false
-            )
+            musicRepository.getSongsForAlbum(albumId).collect { songs ->
+                _uiState.value = AlbumUiState(
+                    albumTitle = songs.firstOrNull()?.album ?: "",
+                    artist = songs.firstOrNull()?.artist ?: "",
+                    songs = songs,
+                    isLoading = false
+                )
+            }
         }
     }
 

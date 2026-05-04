@@ -42,7 +42,8 @@ All dependencies are declared in `gradle/libs.versions.toml` using the Gradle ve
 
 - **Single Activity** — `MainActivity` is the only activity; all screens are Compose destinations
 - **Hilt everywhere** — annotate ViewModels with `@HiltViewModel`, activities/services with `@AndroidEntryPoint`
-- **Room for persistence** — song data comes from MediaStore (read-only); only playlists are stored in Room
+- **Room as primary data source** — all music metadata (songs, albums, artists) is stored in Room and read via reactive Flows; MediaStore is used only for the initial sync on app launch
+- **Folder scanning via SAF** — user-initiated rescans use DocumentFile (Storage Access Framework) and MediaMetadataRetriever to import audio files from selected folders
 - **Singleton ExoPlayer** — the player instance is shared between the service and ViewModels via Hilt
 - **Type-safe routes** — navigation routes are `@Serializable` data classes/objects in `Routes.kt`
 - **StateFlow for UI state** — each ViewModel exposes a single `StateFlow<*UiState>` data class

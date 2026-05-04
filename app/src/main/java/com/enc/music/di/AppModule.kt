@@ -4,7 +4,10 @@ import android.content.ContentResolver
 import android.content.Context
 import androidx.room.Room
 import com.enc.music.data.local.MusicDatabase
+import com.enc.music.data.local.dao.AlbumDao
+import com.enc.music.data.local.dao.ArtistDao
 import com.enc.music.data.local.dao.PlaylistDao
+import com.enc.music.data.local.dao.SongDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,11 +32,26 @@ object AppModule {
             context,
             MusicDatabase::class.java,
             "enc_music.db"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides
     fun providePlaylistDao(database: MusicDatabase): PlaylistDao {
         return database.playlistDao()
+    }
+
+    @Provides
+    fun provideSongDao(database: MusicDatabase): SongDao {
+        return database.songDao()
+    }
+
+    @Provides
+    fun provideAlbumDao(database: MusicDatabase): AlbumDao {
+        return database.albumDao()
+    }
+
+    @Provides
+    fun provideArtistDao(database: MusicDatabase): ArtistDao {
+        return database.artistDao()
     }
 }

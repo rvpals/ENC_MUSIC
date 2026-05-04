@@ -16,6 +16,7 @@ import androidx.navigation.toRoute
 import com.enc.music.ui.components.MiniPlayer
 import com.enc.music.ui.screens.album.AlbumScreen
 import com.enc.music.ui.screens.artist.ArtistScreen
+import com.enc.music.ui.screens.dbmanagement.DatabaseManagementScreen
 import com.enc.music.ui.screens.library.LibraryScreen
 import com.enc.music.ui.screens.player.PlayerScreen
 
@@ -37,7 +38,8 @@ fun MusicNavHost(
                     LibraryScreen(
                         onSongClick = { },
                         onAlbumClick = { albumId -> navController.navigate(AlbumRoute(albumId)) },
-                        onArtistClick = { artistId -> navController.navigate(ArtistRoute(artistId)) }
+                        onArtistClick = { artistId -> navController.navigate(ArtistRoute(artistId)) },
+                        onNavigateTo = { route -> navController.navigate(route) }
                     )
                 }
                 composable<AlbumRoute> { backStackEntry ->
@@ -58,6 +60,11 @@ fun MusicNavHost(
                 }
                 composable<PlayerRoute> {
                     PlayerScreen(onBack = { navController.popBackStack() })
+                }
+                composable<DatabaseManagementRoute> {
+                    DatabaseManagementScreen(
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
         }

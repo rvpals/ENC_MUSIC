@@ -60,6 +60,9 @@ coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutin
 # Splash Screen
 splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 
+# DocumentFile
+documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.0.1" }
+
 # Serialization
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ENC Music is an Android music player app built with Kotlin, Jetpack Compose, and Media3 (ExoPlayer). It reads audio from the device via MediaStore and plays it with background playback support via MediaSessionService.
+ENC Music is an Android music player app built with Kotlin, Jetpack Compose, and Media3 (ExoPlayer). It stores all music metadata in a local Room SQLite database (synced from MediaStore on launch), supports folder-based browsing and rescanning via SAF, and plays audio with background playback support via MediaSessionService.
 
 **Package:** `com.enc.music`
 **Min SDK:** 26 (Android 8.0) | **Target/Compile SDK:** 35 (Android 15)
@@ -31,7 +31,7 @@ Requires `JAVA_HOME` set to JDK 17 (on this machine: `E:/Prog/Java/jdk-17`).
 
 - **UI:** Jetpack Compose with Material 3, Coil for images
 - **Media:** Media3 (ExoPlayer + MediaSession) for audio playback
-- **Database:** Room with KSP annotation processing
+- **Database:** Room with KSP annotation processing (songs, albums, artists, playlists)
 - **DI:** Hilt with KSP
 - **Navigation:** Navigation Compose (single-activity architecture)
 - **Async:** Kotlin Coroutines + Flows
@@ -59,12 +59,12 @@ Room Database + Media3 Service
 
 ## Key Packages
 
-- `model/` — domain models (Song, Album, Artist) used across layers
-- `data/local/` — Room database, entities (PlaylistEntity, PlaylistSongCrossRef), DAOs
-- `data/repository/MusicRepository` — queries MediaStore for songs/albums/artists
+- `model/` — domain models (Song, Album, Artist, FolderItem) used across layers
+- `data/local/` — Room database, entities (SongEntity, AlbumEntity, ArtistEntity, PlaylistEntity, PlaylistSongCrossRef), DAOs (SongDao, AlbumDao, ArtistDao, PlaylistDao)
+- `data/repository/MusicRepository` — MediaStore sync, Room reads via Flow, SAF folder scanning, library erase
 - `service/PlaybackService` — Media3 MediaSessionService for background audio
-- `di/` — Hilt modules (AppModule for DB/ContentResolver, MediaModule for ExoPlayer)
-- `ui/screens/` — library (tabbed songs/albums/artists), player, album detail, artist detail
+- `di/` — Hilt modules (AppModule for DB/ContentResolver/DAOs, MediaModule for ExoPlayer)
+- `ui/screens/` — library (tabbed songs/albums/artists/folders), player, album detail, artist detail, database management
 - `ui/navigation/` — type-safe routes via `@Serializable` data objects + Navigation Compose + NavHostViewModel
 - `ui/components/` — shared composables (SongListItem, MiniPlayer)
 
