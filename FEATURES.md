@@ -6,7 +6,9 @@
 - **Albums tab** — grid of albums with cover art, artist name, and song count
 - **Artists tab** — list of artists with album and song counts
 - **Folders tab** — browse music by folder hierarchy with recursive navigation into subdirectories and back to parent
-- **Status bar** — shown below the tab row on every tab, displaying item counts (e.g., "245 songs", "32 albums", "18 artists", "3 folders · 12 files")
+- **Playlists tab** — browse all user-created playlists showing name and song count; tap to load and play all songs in the playlist
+- **Status bar** — shown below the tab row on every tab, displaying item counts (e.g., "245 songs", "32 albums", "18 artists", "3 folders · 12 files", "5 playlists")
+- **Instant loading** — library tabs display cached data from Room immediately; MediaStore sync runs in background with auto-updating UI via reactive Flows
 - All music metadata stored locally in SQLite via Room (songs with genre, year, rating, albums, artists, file paths)
 
 ## Enchanted Music Magic
@@ -41,7 +43,10 @@
 
 - Accessible via the app menu (3-dot overflow menu in the top bar)
 - **Library statistics** — displays total number of songs, albums, artists, and files in a card grid
-- **Rescan Library** — opens a folder picker (SAF), recursively scans the selected folder for audio files, extracts metadata (title, artist, album, duration, genre, year) using MediaMetadataRetriever, and stores in the database; skips songs already in the database
+- **Rescan Library** — opens a folder picker (SAF), recursively scans the selected folder for audio files, extracts metadata (title, artist, album, duration, genre, year) using MediaMetadataRetriever, and stores in the database; skips songs already in the database; shows real-time progress:
+  - Linear progress bar with percentage
+  - "X of Y files imported" counter
+  - Current file name being processed
 - **Erase Library** — prompts with a confirmation dialog, then truncates all songs, albums, and artists tables
 - Supported audio formats: MP3, M4A, AAC, OGG, Opus, FLAC, WAV, WMA, ALAC, AIFF
 
@@ -49,9 +54,21 @@
 
 - **Enchanted Music Magic** — navigate to advanced search and smart playlist builder
 - **Database Management** — navigate to database management screen
-- **Preferences** — placeholder for future settings
+- **Preferences** — navigate to preferences screen
 - **Help** — placeholder for future help content
-- **About** — placeholder for future about screen
+- **About** — navigate to about screen
+
+## Preferences
+
+- Accessible via the app menu
+- **Playback** section:
+  - **Auto-play after playlist select** — toggle to start playing immediately when a playlist is selected from the Playlists tab
+- Settings persisted via Jetpack DataStore
+
+## About
+
+- Accessible via the app menu
+- Displays app name, version number, and tagline
 
 ## Mini Player
 
@@ -100,10 +117,13 @@
 - Songs in the current folder are listed below subfolders
 - Top bar updates to show the current folder name when navigating into subfolders
 
-## Playlists (Data Layer)
+## Playlists
 
+- **Playlists tab** in the library for browsing all playlists
 - Create and delete playlists
 - Add and remove songs from playlists
+- Tap a playlist to play all its songs
+- Song count displayed per playlist
 - Persistent storage via Room database
 
 ## Permissions

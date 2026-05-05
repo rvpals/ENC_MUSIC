@@ -16,8 +16,8 @@ android {
         applicationId = "com.enc.music"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.4.0"
     }
 
     buildTypes {
@@ -94,6 +94,9 @@ dependencies {
 
     // DocumentFile (SAF folder browsing)
     implementation(libs.documentfile)
+
+    // DataStore
+    implementation(libs.datastore.preferences)
 
     // Serialization
     implementation(libs.serialization.json)

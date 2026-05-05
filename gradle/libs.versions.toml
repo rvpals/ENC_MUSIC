@@ -63,6 +63,9 @@ splashscreen = { group = "androidx.core", name = "core-splashscreen", version.re
 # DocumentFile
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.0.1" }
 
+# DataStore
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.1" }
+
 # Serialization
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 

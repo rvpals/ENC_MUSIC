@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.4.0] - 2026-05-04
+
+### Added
+- **Playlists tab** — new tab in the library for browsing and playing user-created playlists; shows playlist name and song count, tapping a playlist loads its songs into the player
+- **Scan progress bar** — Database Management "Rescan Library" now shows a linear progress bar with percentage, "X of Y files imported" counter, and current file name during folder scanning
+- **Preferences screen** — accessible from the app menu with a "Playback" section containing the "Auto-play after playlist select" toggle (persisted via DataStore)
+- **About screen** — shows app name, version, and tagline
+- `Playlist` domain model with song count
+- `PreferencesRepository` backed by Jetpack DataStore for persistent user preferences
+- `PlaylistDao.getSongCountForPlaylist()` query
+- Playlist methods in `MusicRepository`: `getAllPlaylists`, `getSongIdsForPlaylist`, `createPlaylist`, `deletePlaylist`, `addSongToPlaylist`, `removeSongFromPlaylist`
+- `PreferencesRoute` and `AboutRoute` added to type-safe navigation
+- DataStore Preferences dependency (`androidx.datastore:datastore-preferences:1.1.1`)
+
+### Changed
+- **Instant library loading** — library tabs now display cached data from Room immediately on open; MediaStore sync runs in the background and the UI auto-updates via reactive Flows (eliminates the loading spinner delay for large libraries)
+- `MusicRepository.scanFolder` now accepts a progress callback and pre-counts audio files before scanning to report accurate percentage progress
+- `DatabaseManagementUiState` extended with scan progress fields (`scanProgress`, `scanFilesProcessed`, `scanTotalFiles`, `scanCurrentFile`)
+- `LibraryUiState` extended with `playlists` field
+- `LibraryTab` enum extended with `Playlists`
+- `LibraryViewModel` collects playlists via `combine` and exposes `playPlaylist()` method
+- App menu "Preferences" and "About" items now navigate to their respective screens
+- `versionCode` bumped to 5, `versionName` to 1.4.0
+
 ## [1.3.0] - 2026-05-04
 
 ### Added

@@ -14,12 +14,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.enc.music.ui.components.MiniPlayer
+import com.enc.music.ui.screens.about.AboutScreen
 import com.enc.music.ui.screens.album.AlbumScreen
 import com.enc.music.ui.screens.artist.ArtistScreen
 import com.enc.music.ui.screens.dbmanagement.DatabaseManagementScreen
 import com.enc.music.ui.screens.library.LibraryScreen
 import com.enc.music.ui.screens.magic.MagicSearchScreen
 import com.enc.music.ui.screens.player.PlayerScreen
+import com.enc.music.ui.screens.preferences.PreferencesScreen
 
 @Composable
 fun MusicNavHost(
@@ -69,6 +71,16 @@ fun MusicNavHost(
                 }
                 composable<MagicSearchRoute> {
                     MagicSearchScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<PreferencesRoute> {
+                    PreferencesScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<AboutRoute> {
+                    AboutScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,10 +68,13 @@ import coil.compose.AsyncImage
 import com.enc.music.model.Album
 import com.enc.music.model.Artist
 import com.enc.music.model.FolderItem
+import com.enc.music.model.Playlist
 import com.enc.music.model.Song
 import com.enc.music.ui.components.SongListItem
+import com.enc.music.ui.navigation.AboutRoute
 import com.enc.music.ui.navigation.DatabaseManagementRoute
 import com.enc.music.ui.navigation.MagicSearchRoute
+import com.enc.music.ui.navigation.PreferencesRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -175,7 +179,10 @@ fun LibraryScreen(
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Preferences") },
-                                    onClick = { showMenu = false }
+                                    onClick = {
+                                        showMenu = false
+                                        onNavigateTo(PreferencesRoute)
+                                    }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Help") },
@@ -183,7 +190,10 @@ fun LibraryScreen(
                                 )
                                 DropdownMenuItem(
                                     text = { Text("About") },
-                                    onClick = { showMenu = false }
+                                    onClick = {
+                                        showMenu = false
+                                        onNavigateTo(AboutRoute)
+                                    }
                                 )
                             }
                         }
@@ -228,6 +238,7 @@ fun LibraryScreen(
                             if (folderCount == 0 && fileCount == 0) append("Empty")
                         }
                     }
+                    LibraryTab.Playlists -> "${uiState.playlists.size} playlists"
                 }
 
                 StatusBar(text = statusText)
@@ -254,6 +265,13 @@ fun LibraryScreen(
                         onFolderClick = { viewModel.openFolder(it.path) },
                         onSongClick = { song ->
                             viewModel.playSong(song, uiState.folderSongs)
+                            onSongClick()
+                        }
+                    )
+                    LibraryTab.Playlists -> PlaylistList(
+                        playlists = uiState.playlists,
+                        onPlaylistClick = { playlist ->
+                            viewModel.playPlaylist(playlist.id)
                             onSongClick()
                         }
                     )
@@ -420,6 +438,44 @@ private fun FolderBrowser(
             }
             items(songs, key = { it.id }) { song ->
                 SongListItem(song = song, onClick = { onSongClick(song) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaylistList(playlists: List<Playlist>, onPlaylistClick: (Playlist) -> Unit) {
+    if (playlists.isEmpty()) {
+        EmptyState("No playlists found")
+    } else {
+        LazyColumn {
+            items(playlists, key = { it.id }) { playlist ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onPlaylistClick(playlist) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.PlaylistPlay,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = playlist.name,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "${playlist.songCount} songs",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }

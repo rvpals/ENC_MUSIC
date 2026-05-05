@@ -18,7 +18,11 @@ data class DatabaseManagementUiState(
     val fileCount: Int = 0,
     val isLoading: Boolean = true,
     val isScanning: Boolean = false,
-    val scanMessage: String? = null
+    val scanMessage: String? = null,
+    val scanProgress: Float = 0f,
+    val scanFilesProcessed: Int = 0,
+    val scanTotalFiles: Int = 0,
+    val scanCurrentFile: String = ""
 )
 
 @HiltViewModel
@@ -48,10 +52,31 @@ class DatabaseManagementViewModel @Inject constructor(
 
     fun scanFolder(folderUri: Uri, context: Context) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isScanning = true, scanMessage = "Scanning...")
+            _uiState.value = _uiState.value.copy(
+                isScanning = true,
+                scanMessage = null,
+                scanProgress = 0f,
+                scanFilesProcessed = 0,
+                scanTotalFiles = 0,
+                scanCurrentFile = ""
+            )
             try {
-                musicRepository.scanFolder(folderUri, context)
-                _uiState.value = _uiState.value.copy(isScanning = false, scanMessage = "Scan complete")
+                musicRepository.scanFolder(folderUri, context) { progress ->
+                    val pct = if (progress.totalFiles > 0) {
+                        progress.filesProcessed.toFloat() / progress.totalFiles
+                    } else 0f
+                    _uiState.value = _uiState.value.copy(
+                        scanProgress = pct,
+                        scanFilesProcessed = progress.filesProcessed,
+                        scanTotalFiles = progress.totalFiles,
+                        scanCurrentFile = progress.currentFile
+                    )
+                }
+                _uiState.value = _uiState.value.copy(
+                    isScanning = false,
+                    scanMessage = "Scan complete",
+                    scanProgress = 1f
+                )
                 loadStats()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

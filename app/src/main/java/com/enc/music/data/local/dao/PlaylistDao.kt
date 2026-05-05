@@ -32,4 +32,7 @@ interface PlaylistDao {
 
     @Query("SELECT songId FROM playlist_songs WHERE playlistId = :playlistId ORDER BY sortOrder")
     fun getSongIdsForPlaylist(playlistId: Long): Flow<List<Long>>
+
+    @Query("SELECT COUNT(*) FROM playlist_songs WHERE playlistId = :playlistId")
+    suspend fun getSongCountForPlaylist(playlistId: Long): Int
 }

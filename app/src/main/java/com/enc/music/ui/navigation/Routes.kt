@@ -19,3 +19,9 @@ object DatabaseManagementRoute
 
 @Serializable
 object MagicSearchRoute
+
+@Serializable
+object PreferencesRoute
+
+@Serializable
+object AboutRoute

@@ -9,12 +9,15 @@ import android.provider.MediaStore
 import androidx.documentfile.provider.DocumentFile
 import com.enc.music.data.local.dao.AlbumDao
 import com.enc.music.data.local.dao.ArtistDao
+import com.enc.music.data.local.dao.PlaylistDao
 import com.enc.music.data.local.dao.SongDao
 import com.enc.music.data.local.entity.AlbumEntity
 import com.enc.music.data.local.entity.ArtistEntity
+import com.enc.music.data.local.entity.PlaylistSongCrossRef
 import com.enc.music.data.local.entity.SongEntity
 import com.enc.music.model.Album
 import com.enc.music.model.Artist
+import com.enc.music.model.Playlist
 import com.enc.music.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +31,8 @@ class MusicRepository @Inject constructor(
     private val contentResolver: ContentResolver,
     private val songDao: SongDao,
     private val albumDao: AlbumDao,
-    private val artistDao: ArtistDao
+    private val artistDao: ArtistDao,
+    private val playlistDao: PlaylistDao
 ) {
 
     suspend fun syncFromMediaStore() = withContext(Dispatchers.IO) {
@@ -80,7 +84,47 @@ class MusicRepository @Inject constructor(
         artistDao.deleteAll()
     }
 
-    suspend fun scanFolder(folderUri: Uri, context: android.content.Context) = withContext(Dispatchers.IO) {
+    fun getAllPlaylists(): Flow<List<Playlist>> =
+        playlistDao.getAllPlaylists().map { entities ->
+            entities.map { entity ->
+                Playlist(
+                    id = entity.id,
+                    name = entity.name,
+                    createdAt = entity.createdAt,
+                    songCount = playlistDao.getSongCountForPlaylist(entity.id)
+                )
+            }
+        }
+
+    fun getSongIdsForPlaylist(playlistId: Long): Flow<List<Long>> =
+        playlistDao.getSongIdsForPlaylist(playlistId)
+
+    suspend fun createPlaylist(name: String): Long =
+        playlistDao.createPlaylist(com.enc.music.data.local.entity.PlaylistEntity(name = name))
+
+    suspend fun deletePlaylist(playlistId: Long) {
+        playlistDao.getPlaylistById(playlistId)?.let { playlistDao.deletePlaylist(it) }
+    }
+
+    suspend fun addSongToPlaylist(playlistId: Long, songId: Long) {
+        playlistDao.addSongToPlaylist(PlaylistSongCrossRef(playlistId = playlistId, songId = songId))
+    }
+
+    suspend fun removeSongFromPlaylist(playlistId: Long, songId: Long) {
+        playlistDao.removeSongFromPlaylist(playlistId, songId)
+    }
+
+    data class ScanProgress(
+        val currentFile: String = "",
+        val filesProcessed: Int = 0,
+        val totalFiles: Int = 0
+    )
+
+    suspend fun scanFolder(
+        folderUri: Uri,
+        context: android.content.Context,
+        onProgress: (ScanProgress) -> Unit = {}
+    ) = withContext(Dispatchers.IO) {
         val existingPaths = songDao.getAllFilePaths().toSet()
         val newSongs = mutableListOf<SongEntity>()
         val albumsMap = mutableMapOf<Long, AlbumEntity>()
@@ -88,7 +132,14 @@ class MusicRepository @Inject constructor(
         var nextId = (songDao.getCount() + 1).toLong() * 1000000
 
         val rootDoc = DocumentFile.fromTreeUri(context, folderUri) ?: return@withContext
-        scanDocTree(context, rootDoc, existingPaths, newSongs, albumsMap, artistsMap, { nextId++ })
+
+        val totalFiles = countAudioFiles(rootDoc)
+        var filesProcessed = 0
+
+        scanDocTree(context, rootDoc, existingPaths, newSongs, albumsMap, artistsMap, { nextId++ }) { fileName ->
+            filesProcessed++
+            onProgress(ScanProgress(fileName, filesProcessed, totalFiles))
+        }
 
         if (newSongs.isNotEmpty()) {
             songDao.insertAllSkipExisting(newSongs)
@@ -101,6 +152,18 @@ class MusicRepository @Inject constructor(
         }
     }
 
+    private fun countAudioFiles(dir: DocumentFile): Int {
+        var count = 0
+        for (file in dir.listFiles()) {
+            if (file.isDirectory) {
+                count += countAudioFiles(file)
+            } else if (file.isFile && isAudioFile(file.name ?: "")) {
+                count++
+            }
+        }
+        return count
+    }
+
     private fun scanDocTree(
         context: android.content.Context,
         dir: DocumentFile,
@@ -108,13 +171,16 @@ class MusicRepository @Inject constructor(
         songs: MutableList<SongEntity>,
         albums: MutableMap<Long, AlbumEntity>,
         artists: MutableMap<Long, ArtistEntity>,
-        nextId: () -> Long
+        nextId: () -> Long,
+        onFileProcessed: (String) -> Unit = {}
     ) {
         val files = dir.listFiles()
         for (file in files) {
             if (file.isDirectory) {
-                scanDocTree(context, file, existingPaths, songs, albums, artists, nextId)
+                scanDocTree(context, file, existingPaths, songs, albums, artists, nextId, onFileProcessed)
             } else if (file.isFile && isAudioFile(file.name ?: "")) {
+                val fileName = file.name ?: "Unknown"
+                onFileProcessed(fileName)
                 val fileUri = file.uri
                 val filePath = fileUri.toString()
                 if (existingPaths.contains(filePath)) continue

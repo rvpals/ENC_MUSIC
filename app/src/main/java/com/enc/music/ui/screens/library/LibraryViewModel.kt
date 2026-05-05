@@ -10,6 +10,7 @@ import com.enc.music.data.repository.MusicRepository
 import com.enc.music.model.Album
 import com.enc.music.model.Artist
 import com.enc.music.model.FolderItem
+import com.enc.music.model.Playlist
 import com.enc.music.model.Song
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class LibraryTab { Songs, Albums, Artists, Folders }
+enum class LibraryTab { Songs, Albums, Artists, Folders, Playlists }
 
 data class LibraryUiState(
     val songs: List<Song> = emptyList(),
@@ -27,6 +28,7 @@ data class LibraryUiState(
     val artists: List<Artist> = emptyList(),
     val folders: List<FolderItem> = emptyList(),
     val folderSongs: List<Song> = emptyList(),
+    val playlists: List<Playlist> = emptyList(),
     val currentFolderPath: String? = null,
     val selectedTab: LibraryTab = LibraryTab.Songs,
     val isLoading: Boolean = true
@@ -53,17 +55,32 @@ class LibraryViewModel @Inject constructor(
         player.play()
     }
 
+    fun playPlaylist(playlistId: Long) {
+        viewModelScope.launch {
+            musicRepository.getSongIdsForPlaylist(playlistId).first().let { songIds ->
+                val allSongs = _uiState.value.songs
+                val playlistSongs = songIds.mapNotNull { id -> allSongs.find { it.id == id } }
+                if (playlistSongs.isNotEmpty()) {
+                    val mediaItems = playlistSongs.map { it.toMediaItem() }
+                    player.setMediaItems(mediaItems, 0, 0L)
+                    player.prepare()
+                    player.play()
+                }
+            }
+        }
+    }
+
     fun loadLibrary() {
         viewModelScope.launch {
-            musicRepository.syncFromMediaStore()
-
+            // Show cached data from Room immediately
             launch {
                 combine(
                     musicRepository.getAllSongs(),
                     musicRepository.getAllAlbums(),
                     musicRepository.getAllArtists(),
-                    musicRepository.getDistinctFolders()
-                ) { songs, albums, artists, allFolders ->
+                    musicRepository.getDistinctFolders(),
+                    musicRepository.getAllPlaylists()
+                ) { songs, albums, artists, allFolders, playlists ->
                     val current = _uiState.value
                     val folderPath = current.currentFolderPath
                     val folderItems = buildFolderItems(folderPath, allFolders, songs)
@@ -78,11 +95,17 @@ class LibraryViewModel @Inject constructor(
                         artists = artists,
                         folders = folderItems,
                         folderSongs = folderSongs,
+                        playlists = playlists,
                         isLoading = false
                     )
                 }.collect { state ->
                     _uiState.value = state
                 }
+            }
+
+            // Sync from MediaStore in background — Room flows auto-update the UI when done
+            launch {
+                musicRepository.syncFromMediaStore()
             }
         }
     }
